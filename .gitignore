@@ -1,0 +1,6 @@
+*.swp
+*.swo
+Module.symvers
+.tmp_versions/
+modules.order
+module
