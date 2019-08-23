@@ -2,26 +2,27 @@
 #include<linux/init.h>
 #include<linux/module.h>
 #include<linux/moduleparam.h>
+
+#define PRINT(...) 
 int node, cb_debug_val=0;
 char *cb_debug;
 module_param(node, int, S_IRUSR|S_IWUSR);
-module_param(cb_debug_val, int, S_IRUSR|S_IWUSR);
+module_param(cb_debug, charp, S_IRUSR|S_IWUSR);
 /*----------------------Module_param_cb()--------------------------------*/
 int change_debug_lvl(const char *val, const struct kernel_param *kp)
 {
         int res = param_set_int(val, kp); // Use helper for write variable
+	PRINT();
         if(res==0) {
                 printk(KERN_INFO "Call back function called...\n");
 		switch (cb_debug_val) {
 			case 0:
-				#ifdef DEBUG
-				#undef DEBUG
-				#endif
+				#define PRINT(...) 
 				break;
 			case 1:
-				#ifndef DEBUG
-				#define DEBUG
-				#endif
+				#undef PRINT
+				#define PRINT(...) \
+					printk(KERN_INFO "Func %s: Line%d: ", __FUNCTION__, __LINE__)
 				break;
 			}
                 return 0;
@@ -29,21 +30,23 @@ int change_debug_lvl(const char *val, const struct kernel_param *kp)
         return -1;
 }
 
-const struct kernel_param_ops my_param_ops = 
+const struct kernel_param_ops adv_oper = 
 {
         .set = &change_debug_lvl, // Use our setter ...
         .get = &param_get_int, // .. and standard getter
 };
 
-module_param(cb_debug, charp, S_IRUSR|S_IWUSR);
+module_param_cb(cb_debug_val, &adv_oper, &cb_debug_val, S_IRUSR|S_IWUSR);
 
 static int __init first_function(void)
 {
+	PRINT();
 	printk(KERN_INFO "Welcome to kernel\n");
 	return 0;
 }
 void __exit exit_function(void)
 {
+	PRINT();
 	printk(KERN_ERR "Goodbye from kernel\n");
 }
 
